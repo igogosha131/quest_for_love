@@ -253,13 +253,13 @@
 </head>
 <body>
   <div class="container">
-    <h2 id="pageHeader">🔐 Введи наши даты</h2>
+    <h2 id="pageHeader">🔐 Введи секретные коды</h2>
 
     <div class="input-section" id="inputSection">
 
       <!-- Дата 1 -->
       <div class="date-block" data-correct="17122014" data-index="0">
-        <h3>Первая дата</h3>
+        <h3>Первое число</h3>
         <div class="code-inputs">
           <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="0" data-index="0">
           <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="0" data-index="1">
@@ -277,7 +277,7 @@
 
       <!-- Дата 2 -->
       <div class="date-block" data-correct="20082020" data-index="1">
-        <h3>Вторая дата</h3>
+        <h3>Второе число</h3>
         <div class="code-inputs">
           <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="1" data-index="0">
           <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="1" data-index="1">
@@ -295,7 +295,7 @@
 
       <!-- Дата 3 -->
       <div class="date-block" data-correct="13072025" data-index="2">
-        <h3>Третья дата</h3>
+        <h3>Третье число</h3>
         <div class="code-inputs">
           <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="2" data-index="0">
           <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="2" data-index="1">
@@ -331,7 +331,7 @@
 
     <!-- Результат -->
     <div id="result">
-      <img src="img/secret-photo.jpg" alt="Секретное фото">
+      <img src="img/secret-photo.jpg" alt="Секретное фото secret-photo.jpg">
       <p class="hint">Следующая подсказка - около места, где сделано это фото ❤️</p>
     </div>
   </div>
@@ -456,7 +456,7 @@
 
       setTimeout(() => {
         inputSection.classList.add('hidden');
-        header.textContent = '✨ Наши даты ✨';
+        header.textContent = '✨ Люблю тебя бесконечно! Все только начинается, главное - впереди! ✨';
         scene.style.display = 'block';
       }, 500);
     }
