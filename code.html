@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Секретная страница</title>
+  <style>
+    :root {
+      --bg: #f8f9fa;
+      --accent: #e83e8c;
+      --text: #333;
+      --card: #fff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-image: url('img/background.jpg');
+      background-size: cover;
+      background-position: center;
+      opacity: 0.12;
+      z-index: -1;
+    }
+
+    .container {
+      background: var(--card);
+      padding: 1.8rem 1.2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      max-width: 560px;
+      width: 100%;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    h2 { margin-bottom: 1.2rem; color: var(--accent); font-size: 1.35rem; }
+    h3 {
+      color: var(--accent);
+      font-size: 1rem;
+      margin-bottom: 10px;
+      font-weight: 500;
+    }
+
+    .date-block {
+      margin-bottom: 1.2rem;
+      padding: 12px 8px;
+      border-radius: 10px;
+      background: #fafbfc;
+      transition: all 0.4s ease;
+    }
+    .date-block.done {
+      background: linear-gradient(135deg, #fff0f6, #ffe4ef);
+    }
+
+    .code-inputs {
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+      margin-bottom: 10px;
+      flex-wrap: nowrap;
+    }
+    .code-inputs input {
+      width: 32px;
+      height: 42px;
+      font-size: 18px;
+      text-align: center;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      outline: none;
+      transition: all 0.2s;
+      background: #fff;
+      flex-shrink: 0;
+    }
+    .code-inputs input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(232, 62, 140, 0.15);
+    }
+    .code-inputs input.filled {
+      border-color: #aaa;
+      background: #f1f3f4;
+    }
+
+    .check-btn {
+      padding: 8px 20px;
+      font-size: 14px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.2s;
+      margin-top: 4px;
+    }
+    .check-btn:active { transform: scale(0.97); }
+    .check-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .formatted-date {
+      display: none;
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 2px;
+      padding: 8px 0;
+      animation: fadeInScale 0.6s ease;
+    }
+    .formatted-date .heart {
+      color: #e83e8c;
+      display: inline-block;
+      animation: heartbeat 1.2s ease-in-out infinite;
+      margin: 0 4px;
+    }
+
+    @keyframes fadeInScale {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+
+    .error {
+      color: #d93025;
+      margin-top: 8px;
+      display: none;
+      font-size: 13px;
+      min-height: 18px;
+    }
+
+    /* Финальная сцена с бесконечностью */
+    .infinity-scene {
+      display: none;
+      margin-top: 1.5rem;
+      padding: 1.5rem 0.5rem;
+    }
+    .equation-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+    .equation-row .date-item {
+      opacity: 0;
+      transform: translateY(20px);
+      animation: slideIn 0.6s ease forwards;
+    }
+    .equation-row .date-item:nth-child(1) { animation-delay: 0.1s; }
+    .equation-row .date-item:nth-child(2) { animation-delay: 0.3s; }
+    .equation-row .date-item:nth-child(3) { animation-delay: 0.5s; }
+    .equation-row .date-item:nth-child(4) { animation-delay: 0.7s; }
+    .equation-row .date-item:nth-child(5) { animation-delay: 0.9s; }
+    .equation-row .date-item:nth-child(6) { animation-delay: 1.1s; }
+    .equation-row .date-item:nth-child(7) { animation-delay: 1.3s; }
+
+    .plus-sign, .equals-sign {
+      font-size: 1.3rem;
+      color: var(--accent);
+      margin: 0 2px;
+    }
+
+    .infinity-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 0.5rem;
+    }
+    .infinity-symbol {
+      font-size: 3rem;
+      color: var(--accent);
+      opacity: 0;
+      transform: scale(0.5);
+      animation: revealInfinity 0.8s ease 1.6s forwards, pulseInfinity 2s ease-in-out 2.4s infinite;
+    }
+    @keyframes revealInfinity {
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes pulseInfinity {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.15); opacity: 0.85; }
+    }
+    @keyframes slideIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .continue-btn {
+      margin-top: 1.5rem;
+      padding: 12px 32px;
+      font-size: 16px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fadeInUp 0.6s ease 2.2s forwards;
+      transition: transform 0.1s;
+    }
+    .continue-btn:active { transform: scale(0.97); }
+    @keyframes fadeInUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    #result { margin-top: 1.5rem; display: none; }
+    #result img {
+      max-width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+      animation: fadeInScale 0.6s ease;
+    }
+    .hint {
+      margin-top: 12px;
+      font-size: 13px;
+      color: #666;
+      line-height: 1.4;
+    }
+
+    .input-section.hidden { display: none; }
+    .infinity-scene.hidden { display: none; }
+
+    @media (max-width: 420px) {
+      .code-inputs input { width: 28px; height: 38px; font-size: 16px; }
+      .equation-row { font-size: 0.95rem; }
+      .infinity-symbol { font-size: 2.4rem; }
+      .formatted-date { font-size: 1.3rem; }
+      h2 { font-size: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 id="pageHeader">🔐 Введи наши даты</h2>
+
+    <div class="input-section" id="inputSection">
+
+      <!-- Дата 1 -->
+      <div class="date-block" data-correct="17122014" data-index="0">
+        <h3>Первая дата</h3>
+        <div class="code-inputs">
+          <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="0" data-index="0">
+          <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="0" data-index="1">
+          <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="0" data-index="2">
+          <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="0" data-index="3">
+          <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="0" data-index="4">
+          <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="0" data-index="5">
+          <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="0" data-index="6">
+          <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="0" data-index="7">
+        </div>
+        <button class="check-btn" onclick="checkDate(0)">Проверить</button>
+        <p class="error" data-error="0"></p>
+        <div class="formatted-date" data-formatted="0"></div>
+      </div>
+
+      <!-- Дата 2 -->
+      <div class="date-block" data-correct="20082020" data-index="1">
+        <h3>Вторая дата</h3>
+        <div class="code-inputs">
+          <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="1" data-index="0">
+          <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="1" data-index="1">
+          <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="1" data-index="2">
+          <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="1" data-index="3">
+          <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="1" data-index="4">
+          <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="1" data-index="5">
+          <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="1" data-index="6">
+          <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="1" data-index="7">
+        </div>
+        <button class="check-btn" onclick="checkDate(1)">Проверить</button>
+        <p class="error" data-error="1"></p>
+        <div class="formatted-date" data-formatted="1"></div>
+      </div>
+
+      <!-- Дата 3 -->
+      <div class="date-block" data-correct="13072025" data-index="2">
+        <h3>Третья дата</h3>
+        <div class="code-inputs">
+          <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="2" data-index="0">
+          <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="2" data-index="1">
+          <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="2" data-index="2">
+          <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="2" data-index="3">
+          <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="2" data-index="4">
+          <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="2" data-index="5">
+          <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="2" data-index="6">
+          <input type="text" maxlength="1" inputmode="numeric" class="digit" data-group="2" data-index="7">
+        </div>
+        <button class="check-btn" onclick="checkDate(2)">Проверить</button>
+        <p class="error" data-error="2"></p>
+        <div class="formatted-date" data-formatted="2"></div>
+      </div>
+
+    </div>
+
+    <!-- Сцена с бесконечностью -->
+    <div class="infinity-scene" id="infinityScene">
+      <div class="equation-row">
+        <span class="date-item">17.12.2014</span>
+        <span class="date-item plus-sign">+</span>
+        <span class="date-item">20.08.2020</span>
+        <span class="date-item plus-sign">+</span>
+        <span class="date-item">13.07.2025</span>
+        <span class="date-item equals-sign">=</span>
+      </div>
+      <div class="infinity-row">
+        <span class="infinity-symbol">∞</span>
+      </div>
+      <button class="continue-btn" onclick="showResult()">Продолжить ❤️</button>
+    </div>
+
+    <!-- Результат -->
+    <div id="result">
+      <img src="img/secret-photo.jpg" alt="Секретное фото">
+      <p class="hint">Следующая подсказка - около места, где сделано это фото ❤️</p>
+    </div>
+  </div>
+
+  <script>
+    const CORRECT_DATES = ['17122014', '20082020', '13072025'];
+    const solved = [false, false, false];
+
+    // Инициализация всех полей ввода
+    document.querySelectorAll('.date-block').forEach((block, groupIdx) => {
+      const inputs = block.querySelectorAll('.digit');
+      const errorMsg = document.querySelector(`[data-error="${groupIdx}"]`);
+
+      function resetError() {
+        errorMsg.style.display = 'none';
+        errorMsg.textContent = '';
+      }
+
+      inputs.forEach((input, index) => {
+        input.addEventListener('input', (e) => {
+          const val = e.target.value.replace(/\D/g, '');
+          e.target.value = val;
+          if (val && index < inputs.length - 1) inputs[index + 1].focus();
+          e.target.classList.toggle('filled', !!val);
+          resetError();
+
+          // Автопроверка, когда все 8 цифр введены
+          const allFilled = Array.from(inputs).every(i => i.value.length === 1);
+          if (allFilled) {
+            setTimeout(() => checkDate(groupIdx), 150);
+          }
+        });
+
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Backspace' && !e.target.value && index > 0) inputs[index - 1].focus();
+          if (e.key === 'ArrowLeft' && index > 0) inputs[index - 1].focus();
+          if (e.key === 'ArrowRight' && index < inputs.length - 1) inputs[index + 1].focus();
+          if (e.key === 'Enter') checkDate(groupIdx);
+        });
+
+        input.addEventListener('paste', (e) => {
+          e.preventDefault();
+          const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 8);
+          if (paste.length === 8) {
+            paste.split('').forEach((char, i) => { if (inputs[i]) inputs[i].value = char; });
+            inputs[7].focus();
+            resetError();
+            setTimeout(() => checkDate(groupIdx), 150);
+          }
+        });
+      });
+    });
+
+    function getDateValue(groupIdx) {
+      const inputs = document.querySelectorAll(`.date-block[data-index="${groupIdx}"] .digit`);
+      return Array.from(inputs).map(inp => inp.value).join('');
+    }
+
+    function formatRawDate(raw) {
+      if (raw.length !== 8) return raw;
+      return `${raw.slice(0,2)}.${raw.slice(2,4)}.${raw.slice(4,8)}`;
+    }
+
+    function checkDate(groupIdx) {
+      if (solved[groupIdx]) return;
+
+      const input = getDateValue(groupIdx);
+      const block = document.querySelector(`.date-block[data-index="${groupIdx}"]`);
+      const errorMsg = document.querySelector(`[data-error="${groupIdx}"]`);
+      const inputs = block.querySelectorAll('.digit');
+      const formatted = block.querySelector('.formatted-date');
+      const btn = block.querySelector('.check-btn');
+
+      if (input.length < 8) {
+        errorMsg.textContent = 'Введи все 8 цифр 🔢';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      if (input === CORRECT_DATES[groupIdx]) {
+        solved[groupIdx] = true;
+        errorMsg.style.display = 'none';
+
+        // Скрываем поля ввода и кнопку
+        block.querySelector('.code-inputs').style.display = 'none';
+        btn.style.display = 'none';
+        block.classList.add('done');
+
+        // Показываем красиво отформатированную дату
+        formatted.innerHTML = `${formatRawDate(input)} <span class="heart">❤️</span>`;
+        formatted.style.display = 'block';
+
+        // Вибрация при успехе
+        if (navigator.vibrate) navigator.vibrate(60);
+
+        // Проверяем, все ли даты введены
+        if (solved.every(v => v)) {
+          setTimeout(showInfinityScene, 800);
+        }
+      } else {
+        errorMsg.textContent = 'Неверная дата. Попробуй ещё раз 💔';
+        errorMsg.style.display = 'block';
+        if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
+
+        inputs.forEach(inp => {
+          inp.value = '';
+          inp.classList.remove('filled');
+        });
+        inputs[0].focus();
+      }
+    }
+
+    function showInfinityScene() {
+      const inputSection = document.getElementById('inputSection');
+      const header = document.getElementById('pageHeader');
+      const scene = document.getElementById('infinityScene');
+
+      // Плавно скрываем ввод
+      inputSection.style.transition = 'opacity 0.5s, transform 0.5s';
+      inputSection.style.opacity = '0';
+      inputSection.style.transform = 'translateY(-20px)';
+
+      setTimeout(() => {
+        inputSection.classList.add('hidden');
+        header.textContent = '✨ Наши даты ✨';
+        scene.style.display = 'block';
+      }, 500);
+    }
+
+    function showResult() {
+      const scene = document.getElementById('infinityScene');
+      const header = document.getElementById('pageHeader');
+      const result = document.getElementById('result');
+
+      scene.style.transition = 'opacity 0.5s';
+      scene.style.opacity = '0';
+
+      setTimeout(() => {
+        scene.classList.add('hidden');
+        header.style.display = 'none';
+        result.style.display = 'block';
+      }, 500);
+    }
+
+    window.addEventListener('load', () => {
+      const firstInput = document.querySelector('.date-block[data-index="0"] .digit');
+      if (firstInput) firstInput.focus();
+    });
+  </script>
+</body>
+</html>
