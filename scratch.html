@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+
+<title>Секретный подарок</title>
+
+<style>
+  :root{
+    --accent:#ff4f9a;
+    --bg:#f5f6fa;
+    --text:#2b2b2b;
+  }
+
+  *{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+  }
+
+  body{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    overflow-x:hidden;
+    font-family:system-ui,-apple-system,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    position:relative;
+  }
+
+  body::before{
+    content:'';
+    position:fixed;
+    inset:0;
+    background:url('img/background.jpg') center/cover no-repeat;
+    opacity:.12;
+    z-index:-1;
+  }
+
+  .container{
+    width:100%;
+    max-width:470px;
+    background:white;
+    border-radius:28px;
+    padding:28px 22px;
+    box-shadow:
+      0 20px 60px rgba(0,0,0,.12),
+      0 4px 20px rgba(0,0,0,.06);
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+  }
+
+  .container::before{
+    content:'';
+    position:absolute;
+    inset:-100px;
+    background:
+      radial-gradient(circle at top left, rgba(255,255,255,.8), transparent 30%),
+      radial-gradient(circle at bottom right, rgba(255,255,255,.5), transparent 30%);
+    pointer-events:none;
+  }
+
+  h1{
+    font-size:2rem;
+    margin-bottom:10px;
+    color:var(--accent);
+  }
+
+  p{
+    line-height:1.6;
+    color:#555;
+  }
+
+  .scratch-wrapper{
+    margin:28px auto 18px;
+    width:100%;
+    max-width:400px;
+    position:relative;
+    border-radius:24px;
+    overflow:hidden;
+    box-shadow:
+      0 12px 30px rgba(0,0,0,.18),
+      inset 0 1px 0 rgba(255,255,255,.4);
+    transform:translateZ(0);
+  }
+
+  .reward-image{
+    width:100%;
+    display:block;
+    user-select:none;
+    -webkit-user-drag:none;
+  }
+
+  canvas{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    touch-action:none;
+    cursor:grab;
+  }
+
+  .coin{
+    position:fixed;
+    width:50px;
+    height:50px;
+    border-radius:50%;
+    pointer-events:none;
+    z-index:999;
+    opacity:0;
+    transform:translate(-50%, -50%);
+    background:
+      radial-gradient(circle at 30% 30%, #fff7c0, #e4c86b 35%, #ba8b28 65%, #8a6415);
+    box-shadow:
+      inset 0 2px 4px rgba(255,255,255,.8),
+      inset 0 -4px 8px rgba(0,0,0,.25),
+      0 6px 14px rgba(0,0,0,.3);
+  }
+
+  .coin::after{
+    content:'₺';
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:25px;
+    font-weight:800;
+    color:rgba(255,255,255,.9);
+  }
+
+  .instruction{
+    margin-top:8px;
+    color:var(--accent);
+    font-weight:600;
+    font-size:1.05rem;
+  }
+
+  .progress{
+    margin-top:14px;
+    height:12px;
+    background:#ececec;
+    border-radius:999px;
+    overflow:hidden;
+  }
+
+  .progress-fill{
+    height:100%;
+    width:0%;
+    border-radius:999px;
+    background:
+      linear-gradient(90deg,#ff4f9a,#ff7eb6);
+    transition:width .25s ease;
+  }
+
+  .revealed{
+    margin-top:24px;
+    background:
+      linear-gradient(135deg,#fff0f6,#ffe0ef);
+    padding:22px;
+    border-radius:20px;
+    transform:scale(.85);
+    opacity:0;
+    transition:
+      transform .8s cubic-bezier(.2,.9,.2,1.2),
+      opacity .8s ease;
+    box-shadow:
+      0 10px 25px rgba(255,79,154,.18);
+  }
+
+  .revealed.show{
+    opacity:1;
+    transform:scale(1);
+  }
+
+  .revealed h2{
+    color:var(--accent);
+    margin-bottom:12px;
+  }
+
+  .next-btn{
+    margin-top:18px;
+    border:none;
+    padding:16px 34px;
+    border-radius:16px;
+    font-size:17px;
+    font-weight:700;
+    background:
+      linear-gradient(135deg,#ff4f9a,#ff7db6);
+    color:white;
+    cursor:pointer;
+    opacity:0;
+    transform:translateY(20px);
+    pointer-events:none;
+    transition:.5s;
+    box-shadow:
+      0 10px 24px rgba(255,79,154,.3);
+  }
+
+  .next-btn.show{
+    opacity:1;
+    transform:translateY(0);
+    pointer-events:auto;
+  }
+
+  .sparkle{
+    position:absolute;
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:white;
+    animation:spark 1.5s linear infinite;
+    opacity:.8;
+  }
+
+  @keyframes spark{
+    0%{
+      transform:translateY(0) scale(0);
+      opacity:0;
+    }
+    50%{
+      opacity:1;
+    }
+    100%{
+      transform:translateY(-80px) scale(1.5);
+      opacity:0;
+    }
+  }
+
+  @media (max-width:480px){
+    h1{
+      font-size:1.7rem;
+    }
+
+    .coin{
+      width:60px;
+      height:60px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="coin" id="coin"></div>
+
+<div class="container">
+
+  <h1>🎟 Секретная подсказка</h1>
+
+  <p>
+    Сотри серебряный слой и увидишь, что делать дальше ❤️
+  </p>
+
+  <div class="scratch-wrapper">
+
+    <img
+      src="img/shkaf.jpg"
+      class="reward-image"
+      alt=""
+      draggable="false"
+    >
+
+    <canvas id="scratchCanvas" width="400" height="260"></canvas>
+
+  </div>
+
+  <div class="instruction">
+    ✨ Стирай как настоящий билетик
+  </div>
+
+  <div class="progress">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <div class="revealed" id="revealedBlock">
+
+    <h2>🎉 Поздравляю!</h2>
+
+    <p>
+      Ты почти у цели! ❤️
+      <br>
+      <br>
+      Подарок на нижней правой полке уже ждет тебя!
+
+    </p>
+
+  </div>
+
+<!--  <button class="next-btn" id="nextButton" onclick="goNext()">-->
+<!--    Продолжить →-->
+<!--  </button>-->
+
+</div>
+
+<script>
+const canvas = document.getElementById('scratchCanvas');
+const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+const revealedBlock = document.getElementById('revealedBlock');
+const nextButton = document.getElementById('nextButton');
+const progressFill = document.getElementById('progressFill');
+const coin = document.getElementById('coin');
+
+let isDrawing = false;
+let isRevealed = false;
+
+function createSilverTexture(){
+
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // базовый металл
+  const gradient = ctx.createLinearGradient(0,0,canvas.width,canvas.height);
+
+  gradient.addColorStop(0,'#f7f7f7');
+  gradient.addColorStop(.2,'#bcbcbc');
+  gradient.addColorStop(.4,'#efefef');
+  gradient.addColorStop(.6,'#9e9e9e');
+  gradient.addColorStop(.8,'#f3f3f3');
+  gradient.addColorStop(1,'#b0b0b0');
+
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // шум металла
+  for(let i=0;i<14000;i++){
+
+    const x = Math.random()*canvas.width;
+    const y = Math.random()*canvas.height;
+
+    const alpha = Math.random()*0.15;
+
+    ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+
+    ctx.fillRect(x,y,1,1);
+  }
+
+  // диагональные блики
+  for(let i=-canvas.height;i<canvas.width;i+=18){
+
+    ctx.beginPath();
+
+    ctx.strokeStyle = 'rgba(255,255,255,.08)';
+    ctx.lineWidth = 6;
+
+    ctx.moveTo(i,0);
+    ctx.lineTo(i+canvas.height,canvas.height);
+
+    ctx.stroke();
+  }
+
+  // текст
+  ctx.fillStyle = 'rgba(255,255,255,.92)';
+  ctx.textAlign = 'center';
+
+  ctx.font = 'bold 34px system-ui';
+  ctx.fillText('???', canvas.width/2, canvas.height/2 - 10);
+
+  ctx.font = '20px system-ui';
+  // ctx.fillText('Потри монеткой ✨', canvas.width/2, canvas.height/2 + 28);
+}
+
+createSilverTexture();
+
+function getPos(e){
+
+  const rect = canvas.getBoundingClientRect();
+
+  const clientX = e.touches
+    ? e.touches[0].clientX
+    : e.clientX;
+
+  const clientY = e.touches
+    ? e.touches[0].clientY
+    : e.clientY;
+
+  return{
+    x:(clientX - rect.left)*(canvas.width/rect.width),
+    y:(clientY - rect.top)*(canvas.height/rect.height),
+    clientX,
+    clientY
+  };
+}
+
+function updateCoin(x,y){
+
+  coin.style.opacity = '1';
+  coin.style.left = x + 'px';
+  coin.style.top = y + 'px';
+}
+
+function hideCoin(){
+
+  coin.style.opacity = '0';
+}
+
+function scratch(x,y){
+
+  ctx.globalCompositeOperation = 'destination-out';
+
+  // основной след
+  ctx.beginPath();
+  ctx.arc(x,y,28,0,Math.PI*2);
+  ctx.fill();
+
+  // дополнительные потертости
+  for(let i=0;i<4;i++){
+
+    const offsetX = (Math.random()-0.5)*20;
+    const offsetY = (Math.random()-0.5)*20;
+    const size = 8 + Math.random()*10;
+
+    ctx.beginPath();
+    ctx.arc(x+offsetX,y+offsetY,size,0,Math.PI*2);
+    ctx.fill();
+  }
+
+  if(Math.random() < 0.05){
+    checkProgress();
+  }
+}
+
+function checkProgress(){
+
+  const imageData = ctx.getImageData(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  let transparent = 0;
+
+  for(let i=3;i<imageData.data.length;i+=4){
+
+    if(imageData.data[i] < 20){
+      transparent++;
+    }
+  }
+
+  const percent = (
+    transparent /
+    (canvas.width * canvas.height)
+  ) * 100;
+
+  progressFill.style.width = percent + '%';
+
+  if(percent >= 70 && !isRevealed){
+
+    revealAll();
+  }
+}
+
+function revealAll(){
+
+  isRevealed = true;
+
+  // плавное исчезновение покрытия
+  ctx.globalCompositeOperation = 'destination-out';
+
+  let opacity = 1;
+
+  const fade = setInterval(()=>{
+
+    opacity -= 0.06;
+
+    ctx.fillStyle = `rgba(0,0,0,${opacity})`;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    if(opacity <= 0){
+
+      clearInterval(fade);
+
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+
+      showReward();
+    }
+
+  },30);
+}
+
+function showReward(){
+
+  revealedBlock.classList.add('show');
+
+  setTimeout(()=>{
+    nextButton.classList.add('show');
+  },500);
+
+  createSparkles();
+}
+
+function createSparkles(){
+
+  for(let i=0;i<18;i++){
+
+    const s = document.createElement('div');
+
+    s.className = 'sparkle';
+
+    s.style.left = Math.random()*100 + '%';
+    s.style.bottom = '80px';
+
+    s.style.animationDelay =
+      (Math.random()*1.5)+'s';
+
+    s.style.animationDuration =
+      (1 + Math.random()*2)+'s';
+
+    document.querySelector('.container')
+      .appendChild(s);
+  }
+}
+
+function startDraw(e){
+
+  isDrawing = true;
+
+  const pos = getPos(e);
+
+  updateCoin(pos.clientX,pos.clientY);
+
+  scratch(pos.x,pos.y);
+}
+
+function moveDraw(e){
+
+  if(!isDrawing) return;
+
+  const pos = getPos(e);
+
+  updateCoin(pos.clientX,pos.clientY);
+
+  scratch(pos.x,pos.y);
+}
+
+function endDraw(){
+
+  isDrawing = false;
+
+  hideCoin();
+}
+
+// mouse
+canvas.addEventListener('mousedown',startDraw);
+
+canvas.addEventListener('mousemove',moveDraw);
+
+window.addEventListener('mouseup',endDraw);
+
+// touch
+canvas.addEventListener('touchstart',(e)=>{
+  e.preventDefault();
+  startDraw(e);
+});
+
+canvas.addEventListener('touchmove',(e)=>{
+  e.preventDefault();
+  moveDraw(e);
+});
+
+canvas.addEventListener('touchend',endDraw);
+
+function goNext(){
+
+  window.location.href = 'final.html';
+}
+</script>
+
+</body>
+</html>
