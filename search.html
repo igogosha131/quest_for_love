@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🔍 Поиск предметов</title>
+  <style>
+    :root { --bg: #f8f9fa; --accent: #e83e8c; --text: #333; --card: #fff; --found: #4caf50; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; background: var(--bg); position: relative; }
+    body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: url('img/background.jpg'); background-size: cover; background-position: center; opacity: 0.12; z-index: -1; }
+
+    .container { background: var(--card); padding: 2rem 1.5rem; border-radius: 20px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); max-width: 480px; width: 100%; text-align: center; position: relative; z-index: 1; animation: slideUp 0.6s ease-out; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    h1 { font-size: 1.6rem; margin-bottom: 0.8rem; color: var(--accent); line-height: 1.3; }
+    .description { color: #555; font-size: 1rem; line-height: 1.6; margin-bottom: 1.5rem; }
+
+    /* Галерея */
+    .gallery { position: relative; margin: 1.5rem 0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.1); background: #f5f5f5; }
+    .gallery-track { display: flex; transition: transform 0.3s ease-out; }
+    .gallery-slide { min-width: 100%; aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; background: #eee; cursor: zoom-in; }
+    .gallery-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .gallery-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.9); border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 2; display: flex; align-items: center; justify-content: center; }
+    .gallery-btn.prev { left: 12px; }
+    .gallery-btn.next { right: 12px; }
+    .gallery-dots { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
+    .gallery-dot { width: 8px; height: 8px; border-radius: 50%; background: #ddd; cursor: pointer; transition: background 0.2s; }
+    .gallery-dot.active { background: var(--accent); }
+
+    /* Lightbox */
+    .lightbox { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; }
+    .lightbox.active { display: flex; opacity: 1; }
+    .lightbox img { max-width: 95%; max-height: 90vh; object-fit: contain; border-radius: 8px; }
+    .lightbox-close { position: absolute; top: 20px; right: 20px; width: 44px; height: 44px; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; color: #fff; font-size: 1.8rem; cursor: pointer; }
+    .lightbox-close:hover { background: rgba(255,255,255,0.3); }
+    .lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.15); border: none; width: 50px; height: 50px; border-radius: 50%; color: #fff; font-size: 1.5rem; cursor: pointer; }
+    .lightbox-nav:hover { background: rgba(255,255,255,0.25); }
+    .lightbox-nav.prev { left: 15px; }
+    .lightbox-nav.next { right: 15px; }
+    .lightbox-counter { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); color: #fff; font-size: 0.9rem; background: rgba(0,0,0,0.5); padding: 6px 16px; border-radius: 20px; }
+
+    /* Ввод слова */
+    .word-section {
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px dashed #ddd;
+      display: none;
+    }
+    .word-section.visible { display: block; animation: fadeIn 0.4s ease-out; }
+
+    .word-title { color: var(--accent); font-weight: 500; margin-bottom: 1rem; }
+
+    .word-inputs { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-bottom: 1rem; }
+    .word-inputs input {
+      width: 42px; height: 50px; font-size: 1.3rem; text-align: center;
+      border: 2px solid #ddd; border-radius: 8px; outline: none;
+      text-transform: uppercase; font-weight: 600; transition: border-color 0.2s;
+      caret-color: var(--accent);
+    }
+    .word-inputs input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(232, 62, 140, 0.15); }
+
+    .check-btn { padding: 14px 32px; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-size: 1rem; cursor: pointer; transition: all 0.2s; width: 100%; margin-bottom: 12px; }
+    .check-btn:hover { opacity: 0.95; }
+    .check-btn:active { transform: scale(0.98); }
+
+    .message { margin-top: 10px; font-size: 0.95rem; min-height: 24px; }
+    .message.success { color: var(--found); font-weight: 500; }
+
+    /* Кнопка подсказки */
+    .hint-btn {
+      background: #fff;
+      border: 2px solid var(--accent);
+      color: var(--accent);
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-size: 1.02rem;
+      cursor: pointer;
+      margin: 1.5rem auto 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .hint-btn:hover { background: var(--accent); color: #fff; transform: translateY(-2px); }
+
+    /* Результат успеха */
+    #successScreen {
+      display: none;
+      margin-top: 1.5rem;
+      padding: 2rem 1rem;
+      background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+      border-radius: 20px;
+      border: 3px solid var(--found);
+    }
+    #successScreen.show {
+      display: block;
+      animation: popIn 0.5s ease-out;
+    }
+    .success-word {
+      font-size: 2.8rem;
+      font-weight: 700;
+      letter-spacing: 8px;
+      color: var(--found);
+      margin: 1rem 0;
+      text-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);
+    }
+    .next-btn {
+      margin-top: 1.5rem;
+      padding: 14px 40px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes popIn { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }
+
+    @media (max-width: 360px) {
+      .container { padding: 1.5rem 1rem; }
+      .success-word { font-size: 2.4rem; letter-spacing: 6px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Поиск предметов</h1>
+    <p class="description">✨Ииииии.. это то, в чем ты разбираешься лучше всех!✨
+      <br>В мастерской опять спрятаны <strong>7 предметов</strong>. Для того, чтобы узнать что делать дальше - тебе нужно их собрать, сфотографировать и отправить твоему любимому мужу в ЛС ✨</p>
+
+    <!-- Галерея и Lightbox (без изменений) -->
+    <div class="gallery">
+      <div class="gallery-track" id="galleryTrack">
+        <div class="gallery-slide" onclick="openLightbox(0)"><img src="img/search1.jpg" alt="Фото 1" loading="lazy"></div>
+        <div class="gallery-slide" onclick="openLightbox(1)"><img src="img/search2.jpg" alt="Фото 2" loading="lazy"></div>
+        <div class="gallery-slide" onclick="openLightbox(2)"><img src="img/search3.jpg" alt="Фото 3" loading="lazy"></div>
+        <div class="gallery-slide" onclick="openLightbox(3)"><img src="img/search4.jpg" alt="Фото 4" loading="lazy"></div>
+        <div class="gallery-slide" onclick="openLightbox(4)"><img src="img/search5.jpg" alt="Фото 5" loading="lazy"></div>
+        <div class="gallery-slide" onclick="openLightbox(4)"><img src="img/search6.jpg" alt="Фото 6" loading="lazy"></div>
+        <div class="gallery-slide" onclick="openLightbox(4)"><img src="img/search7.jpg" alt="Фото 7" loading="lazy"></div>
+      </div>
+      <button class="gallery-btn prev" onclick="changeSlide(-1); event.stopPropagation();">❮</button>
+      <button class="gallery-btn next" onclick="changeSlide(1); event.stopPropagation();">❯</button>
+    </div>
+    <div class="gallery-dots" id="galleryDots"></div>
+
+    <!-- Lightbox (без изменений) -->
+    <div class="lightbox" id="lightbox" onclick="closeLightboxOnBg(event)">
+      <button class="lightbox-close" onclick="closeLightbox()">×</button>
+      <button class="lightbox-nav prev" onclick="changeLightbox(-1); event.stopPropagation();">❮</button>
+      <img src="" alt="Увеличенное фото" id="lightboxImg">
+      <button class="lightbox-nav next" onclick="changeLightbox(1); event.stopPropagation();">❯</button>
+      <div class="lightbox-counter" id="lightboxCounter">1 / 7</div>
+    </div>
+
+    <br>P.S. Можешь нажать на фото, чтобы открыть его в полном размере</p>
+
+    <!-- Кнопка открытия ввода -->
+<!--    <button class="hint-btn" id="showWordBtn">-->
+<!--      💡 Если ты нашла все буквы и не получается собрать слово — нажми сюда-->
+<!--    </button>-->
+
+    <!-- Блок ввода слова -->
+    <div class="word-section" id="wordSection">
+      <p class="word-title">📝 Введи собранное слово (7 букв):</p>
+      <div class="word-inputs" id="wordInputs"></div>
+      <button class="check-btn" id="checkBtn" onclick="checkWord()">Проверить слово</button>
+      <p class="message" id="wordMessage"></p>
+    </div>
+
+    <!-- Экран успеха -->
+    <div id="successScreen">
+      <p style="color: var(--found); font-size: 1.1rem; margin-bottom: 0.5rem;">🎉 Поздравляем!</p>
+      <div class="success-word" id="revealedWord">БЕСЕДКА</div>
+      <p style="color: #555; margin: 1rem 0;">Ты отлично справилась!</p>
+<!--      <button class="next-btn" onclick="goToNextPage()">Перейти к следующему шагу →</button>-->
+    </div>
+  </div>
+
+  <script>
+    const TARGET_WORD = 'БЕСЕДКА';
+    const NEXT_PAGE = 'step6.html';
+
+    // Галерея, Lightbox и поля ввода (оставлены без изменений, только основные части)
+    let currentSlide = 0;
+    const track = document.getElementById('galleryTrack');
+    const dotsContainer = document.getElementById('galleryDots');
+    const slides = document.querySelectorAll('.gallery-slide');
+    const slideImages = Array.from(slides).map(slide => slide.querySelector('img').src);
+
+    slides.forEach((_, i) => {
+      const dot = document.createElement('div');
+      dot.className = `gallery-dot ${i === 0 ? 'active' : ''}`;
+      dot.onclick = () => goToSlide(i);
+      dotsContainer.appendChild(dot);
+    });
+
+    function updateGallery() {
+      track.style.transform = `translateX(-${currentSlide * 100}%)`;
+      document.querySelectorAll('.gallery-dot').forEach((dot, i) => dot.classList.toggle('active', i === currentSlide));
+    }
+
+    function changeSlide(dir) {
+      currentSlide = (currentSlide + dir + slides.length) % slides.length;
+      updateGallery();
+    }
+    function goToSlide(i) { currentSlide = i; updateGallery(); }
+
+    // Lightbox (сокращён для экономии места, работает как раньше)
+    let lightboxIndex = 0;
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const lightboxCounter = document.getElementById('lightboxCounter');
+
+    function openLightbox(index) {
+      lightboxIndex = index;
+      lightboxImg.src = slideImages[lightboxIndex];
+      lightboxCounter.textContent = `${lightboxIndex + 1} / ${slides.length}`;
+      lightbox.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      lightbox.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    function closeLightboxOnBg(e) {
+      if (e.target === lightbox) closeLightbox();
+    }
+
+    function changeLightbox(dir) {
+      lightboxIndex = (lightboxIndex + dir + slides.length) % slides.length;
+      lightboxImg.src = slideImages[lightboxIndex];
+      lightboxCounter.textContent = `${lightboxIndex + 1} / ${slides.length}`;
+    }
+
+    // Открытие блока ввода
+    document.getElementById('showWordBtn').addEventListener('click', function() {
+      this.style.display = 'none';
+      document.getElementById('wordSection').classList.add('visible');
+      setTimeout(() => document.querySelector('.word-inputs input').focus(), 300);
+    });
+
+    // Поля ввода
+    const inputsContainer = document.getElementById('wordInputs');
+    const inputs = [];
+
+    for (let i = 0; i < TARGET_WORD.length; i++) {
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.maxLength = 1;
+      inp.autocapitalize = 'characters';
+      inputsContainer.appendChild(inp);
+      inputs.push(inp);
+
+      inp.addEventListener('input', (e) => {
+        let val = e.target.value.replace(/[^а-яёa-z]/gi, '').toUpperCase();
+        e.target.value = val;
+        if (val && i < inputs.length - 1) inputs[i + 1].focus();
+      });
+
+      inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !e.target.value && i > 0) inputs[i - 1].focus();
+      });
+    }
+
+    // Проверка слова
+    function checkWord() {
+      const entered = inputs.map(i => i.value).join('');
+      const msg = document.getElementById('wordMessage');
+
+      if (entered.length < TARGET_WORD.length) {
+        msg.textContent = 'Введи все 7 букв 🔤';
+        msg.className = 'message error';
+        return;
+      }
+
+      const sortedEntered = entered.split('').sort().join('');
+      const sortedTarget = TARGET_WORD.split('').sort().join('');
+
+      if (sortedEntered === sortedTarget) {
+        // Успех
+        document.getElementById('wordSection').style.display = 'none';
+        document.getElementById('successScreen').classList.add('show');
+      } else {
+        msg.textContent = 'Не совсем... Попробуй ещё раз 💔';
+        msg.className = 'message error';
+        if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
+        inputs.forEach(inp => inp.value = '');
+        inputs[0].focus();
+      }
+    }
+
+    function goToNextPage() {
+      window.location.href = NEXT_PAGE;
+    }
+
+    document.addEventListener('keydown', (e) => { if (e.key === 'Enter') checkWord(); });
+
+    window.addEventListener('load', updateGallery);
+  </script>
+</body>
+</html>
