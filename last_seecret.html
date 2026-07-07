@@ -198,7 +198,7 @@
   </div>
 
   <script>
-    const CORRECT_PHRASE = 'я тебя очень сильно люблю и безумно скучаю';
+    const CORRECT_PHRASE = 'очень люблю и скучаю, скоро приеду';
 
     const phraseInput = document.getElementById('phraseInput');
     const errorMsg = document.getElementById('errorMsg');
@@ -225,7 +225,7 @@
       }
 
       if (input === correct) {
-        window.location.href = 'scratch.html';
+        window.location.href = 'last_scratch.html';
       } else {
         errorMsg.textContent = '💭 Подсказка: попробуй посмотреть под другим углом... 💔';
         errorMsg.style.display = 'block';
