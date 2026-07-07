@@ -219,7 +219,7 @@
       const correct = CORRECT_PHRASE.toLowerCase();
 
       if (!input) {
-        errorMsg.textContent = '💭 Подсказка: попробуй посмотреть под другим углом...';
+        errorMsg.textContent = '💭 Попробуй еще раз, почти правильно 💔';
         errorMsg.style.display = 'block';
         return;
       }
@@ -227,7 +227,7 @@
       if (input === correct) {
         window.location.href = 'last_scratch.html';
       } else {
-        errorMsg.textContent = '💭 Подсказка: попробуй посмотреть под другим углом... 💔';
+        errorMsg.textContent = '💭 Попробуй еще раз, почти правильно 💔';
         errorMsg.style.display = 'block';
 
         if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
