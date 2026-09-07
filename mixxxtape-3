@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Страница голоса — демо</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Marck+Script&family=Manrope:wght@400;500;700&family=Amatic+SC:wght@700&display=swap" rel="stylesheet">
+<!-- если CDN не откроется, замени на https://unpkg.com/wavesurfer.js@7 -->
+<script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0}
+  body{min-height:100vh;display:flex;flex-direction:column;align-items:center;
+       background:var(--bg);color:var(--ink);font-family:Manrope,system-ui,sans-serif;
+       transition:background .4s,color .4s}
+
+  /* ---------- ТЕМЫ ---------- */
+  body[data-theme="minimal"]{--bg:#ffffff;--ink:#141414;--accent:#141414;--wave:#14141422;--glowc:transparent;--head:'Caveat';--panel:#ffffffee;--cbody:#1c1c1c;--label:#f7f3ea;--labelink:#141414;--tape:#654a30}
+  body[data-theme="warm"]   {--bg:#f3e9d7;--ink:#54402e;--accent:#8a5a33;--wave:#8a5a3333;--glowc:#ffd9a055;--head:'Marck Script';--panel:#f3e9d7ee;--cbody:#5b4632;--label:#fbf6ec;--labelink:#54402e;--tape:#7a5230}
+  body[data-theme="night"]  {--bg:#0f1418;--ink:#eaf7f5;--accent:#3ee6cf;--wave:#eaf7f522;--glowc:#3ee6cf44;--head:'Caveat';--panel:#0f1418ee;--cbody:#080b0d;--label:#1d2a30;--labelink:#eaf7f5;--tape:#8a6a4a}
+  body[data-theme="retro"]  {--bg:#e8dcc3;--ink:#3d3226;--accent:#b4552d;--wave:#b4552d33;--glowc:transparent;--head:'Amatic SC';--panel:#e8dcc3ee;--cbody:#7a4a2b;--label:#f4ead6;--labelink:#3d3226;--tape:#654a30}
+  body[data-theme="fest"]   {--bg:#fbf7f0;--ink:#2b2b2b;--accent:#c29a5b;--wave:#c29a5b33;--glowc:#ffd98855;--head:'Marck Script';--panel:#fbf7f0ee;--cbody:#2b2b2b;--label:#fffdf8;--labelink:#2b2b2b;--tape:#8a6a45}
+
+  /* ---------- панель демо ---------- */
+  .panel{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;flex-wrap:wrap;gap:6px;
+         justify-content:center;align-items:center;padding:8px 10px;font-size:12px;background:var(--panel);backdrop-filter:blur(8px)}
+  .panel button{border:1px solid var(--accent);background:none;color:var(--ink);border-radius:999px;padding:4px 10px;cursor:pointer;font-size:12px}
+  .panel button.active{background:var(--accent);color:var(--bg)}
+  .ppreview{background:var(--accent);color:var(--bg);border:none;font-weight:700}
+  .pfile{border:1px dashed var(--accent);border-radius:999px;padding:4px 10px;cursor:pointer}
+  .pfile input{display:none}
+  .pcheck{display:flex;gap:4px;align-items:center}
+
+  /* ---------- предпросмотр ---------- */
+  .exitbtn{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:20;display:none;
+           border:1px solid var(--accent);background:var(--panel);color:var(--ink);border-radius:999px;
+           padding:8px 14px;font-size:12px;cursor:pointer;backdrop-filter:blur(8px)}
+  body.preview .panel{display:none}
+  body.preview .exitbtn{display:block}
+  body.preview .page{padding-top:48px}
+
+  /* ---------- страница ---------- */
+  .page{width:min(430px,100%);padding:84px 24px 40px;text-align:center}
+  .topicon{width:30px;height:30px;opacity:.7;margin-bottom:14px}
+  .names{font-family:var(--head),cursive;font-size:36px;font-weight:500;line-height:1.15}
+  .date{margin-top:6px;font-size:14px;letter-spacing:.12em;opacity:.7}
+  [contenteditable]:focus{outline:1.5px dashed var(--accent);outline-offset:5px;border-radius:4px}
+
+  /* ---------- кассета ---------- */
+  .cassette{margin:26px auto 4px;cursor:pointer;user-select:none}
+  .cassette svg{width:min(320px,100%);filter:drop-shadow(0 12px 32px var(--glowc));transition:filter .4s}
+  .cassette rect,.cassette circle,.cassette path,.cassette text,.cassette line{transition:fill .4s,stroke .4s}
+  .reel{transform-box:fill-box;transform-origin:center;animation:spin 1.8s linear infinite;animation-play-state:paused}
+  body.playing .reel{animation-play-state:running}
+  body.fast .reel{animation-duration:.22s}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ---------- плеер ---------- */
+  #wave{margin:22px auto 4px;width:100%;transition:max-width .35s ease}
+  body.has-cassette #wave{max-width:260px}
+  .transport{display:flex;justify-content:center;align-items:center;gap:16px;margin:14px 0 8px}
+  .tbtn{width:46px;height:46px;border-radius:50%;border:1.5px solid var(--accent);background:transparent;color:var(--ink);
+        display:grid;place-items:center;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none;transition:transform .12s}
+  .tbtn:active{transform:scale(.9)}
+  .play{width:64px;height:64px;border-radius:50%;border:none;cursor:pointer;
+        display:grid;place-items:center;background:var(--accent);color:var(--bg);
+        box-shadow:0 10px 28px var(--glowc);transition:transform .15s;visibility:hidden}
+  body.show-play .play{visibility:visible}
+  .play:active{transform:scale(.94)}
+  .i-pause{display:none}
+  body.playing .i-pause{display:block}
+  body.playing .i-play{display:none}
+  .time{font-size:12px;opacity:.6;letter-spacing:.08em}
+  .msg{margin:26px auto 0;max-width:320px;font-family:var(--head),cursive;font-size:22px;line-height:1.4}
+  footer{margin-top:34px;font-size:12px;opacity:.5;letter-spacing:.06em}
+</style>
+</head>
+<body data-theme="minimal">
+
+<div class="panel">
+  <span>демо · тема:</span>
+  <button data-theme="minimal" class="active">минимал</button>
+  <button data-theme="warm">тёплый</button>
+  <button data-theme="night">ночь</button>
+  <button data-theme="retro">ретро</button>
+  <button data-theme="fest">праздник</button>
+  <label class="pfile">загрузить аудио<input type="file" id="file" accept="audio/*"></label>
+  <label class="pcheck"><input type="checkbox" id="showCassette" checked>кассета</label>
+  <label class="pcheck"><input type="checkbox" id="showFilter">звук кассеты</label>
+  <label class="pcheck"><input type="checkbox" id="showPlay">кнопка play</label>
+  <button id="previewBtn" class="ppreview">предпросмотр</button>
+</div>
+
+<button id="exitPreview" class="exitbtn">← к настройкам</button>
+
+<main class="page">
+  <svg class="topicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8.5" cy="12" r="2"/><circle cx="15.5" cy="12" r="2"/><path d="M8.5 14.5h7"/>
+  </svg>
+
+  <h1 class="names" data-field="names" contenteditable spellcheck="false">Маша и Илья</h1>
+  <div class="date" data-field="date" contenteditable spellcheck="false">12 октября 2024</div>
+
+  <!-- КАССЕТА -->
+  <div class="cassette" id="cassette" title="нажми — играет">
+    <svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2.5" y="2.5" width="315" height="195" rx="15.5" fill="var(--cbody)" stroke="#000"/>
+      <rect x="10" y="10" width="300" height="180" rx="12" fill="none" stroke="#fff" stroke-opacity=".15"/>
+      <rect x="28" y="22" width="268" height="130" rx="10" fill="var(--label)"/>
+      <text x="44" y="47" fill="var(--labelink)" font-family="Manrope" font-size="12" letter-spacing="4" font-weight="700">SIDE A</text>
+      <text x="276" y="47" text-anchor="end" fill="var(--labelink)" opacity=".55" font-family="Manrope" font-size="10">mixtape.ru</text>
+      <line x1="44" y1="56" x2="276" y2="56" stroke="var(--labelink)" opacity=".25"/>
+      <rect x="75" y="63" width="173" height="67" rx="10" fill="#181512" stroke="#000" stroke-opacity=".4"/>
+      <path id="tapePath" d="" stroke="var(--tape)" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <circle id="packL" cx="125" cy="97" r="28" fill="var(--tape)" stroke="#000" stroke-opacity=".4"/>
+      <g class="reel">
+        <circle cx="125" cy="97" r="12" fill="var(--label)"/>
+        <g fill="var(--labelink)" fill-opacity=".75">
+          <rect x="122" y="86" width="6" height="22" rx="2"/>
+          <rect x="122" y="86" width="6" height="22" rx="2" transform="rotate(60 125 97)"/>
+          <rect x="122" y="86" width="6" height="22" rx="2" transform="rotate(120 125 97)"/>
+        </g>
+        <circle cx="125" cy="97" r="4" fill="var(--labelink)" fill-opacity=".85"/>
+      </g>
+      <circle id="packR" cx="195" cy="97" r="12" fill="var(--tape)" stroke="#000" stroke-opacity=".4"/>
+      <g class="reel">
+        <circle cx="195" cy="97" r="12" fill="var(--label)"/>
+        <g fill="var(--labelink)" fill-opacity=".75">
+          <rect x="192" y="86" width="6" height="22" rx="2"/>
+          <rect x="192" y="86" width="6" height="22" rx="2" transform="rotate(60 195 97)"/>
+          <rect x="192" y="86" width="6" height="22" rx="2" transform="rotate(120 195 97)"/>
+        </g>
+        <circle cx="195" cy="97" r="4" fill="var(--labelink)" fill-opacity=".85"/>
+      </g>
+      <g opacity=".35" fill="#727272">
+        <circle cx="20" cy="20" r="4"/><circle cx="300" cy="20" r="4"/>
+        <circle cx="20" cy="180" r="4"/><circle cx="300" cy="180" r="4"/>
+      </g>
+      <g stroke="#000" stroke-width="1.2">
+        <path d="M17.5 20H22.5M20 17.5V22.5"/>
+        <path d="M297.5 20H302.5M300 17.5V22.5"/>
+        <path d="M17.5 180H22.5M20 177.5V182.5"/>
+        <path d="M297.5 180H302.5M300 177.5V182.5"/>
+      </g>
+      <path d="M60.5 198.5L75.5 160.5H250L265.5 198.5Z" fill="var(--cbody)" stroke="#000" stroke-opacity=".35" stroke-width="1.4" stroke-linejoin="round"/>
+      <path d="M62.5 197.1L76.5 162.4H249L263.5 197.5" stroke="#fff" stroke-opacity=".15" stroke-width=".7" fill="none"/>
+      <g fill="#727272" opacity=".3">
+        <rect x="122" y="173" width="8" height="8" rx="1"/>
+        <rect x="190" y="173" width="8" height="8" rx="1"/>
+        <circle cx="95.5" cy="180.5" r="4.5"/>
+        <circle cx="223" cy="181" r="4"/>
+      </g>
+    </svg>
+  </div>
+
+  <div id="wave"></div>
+
+  <div class="transport">
+    <button id="rew" class="tbtn" aria-label="перемотка назад">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 7l-7 5 7 5zM12 7l-7 5 7 5z"/></svg>
+    </button>
+    <button id="play" class="play" aria-label="play/pause">
+      <svg class="i-play"  width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      <svg class="i-pause" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+    </button>
+    <button id="ff" class="tbtn" aria-label="перемотка вперёд">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M5 7l7 5-7 5zM12 7l7 5-7 5z"/></svg>
+    </button>
+  </div>
+
+  <div class="time"><span id="cur">0:00</span> / <span id="tot">0:00</span></div>
+
+  <p class="msg" data-field="msg" contenteditable spellcheck="false">С годовщиной! Это песня нашего первого танца ♥</p>
+  <footer>создать свою историю →</footer>
+</main>
+
+<script>
+  const $ = s => document.querySelector(s);
+  const body = document.body;
+  let ws = null, dur = 0;
+
+  const fmt = t => { t = Math.round(t || 0); return Math.floor(t/60) + ':' + String(t%60).padStart(2,'0'); };
+  const themeVars = () => {
+    const cs = getComputedStyle(body);
+    return { wave: cs.getPropertyValue('--wave').trim(), accent: cs.getPropertyValue('--accent').trim() };
+  };
+
+  /* ---------- 1. тексты: свои примеры на тему, пользовательский фиксируется ---------- */
+  const DEFAULTS = {
+    minimal: { names:'Маша и Илья',        date:'12 октября 2024',        msg:'С годовщиной! Это песня нашего первого танца ♥' },
+    warm:    { names:'Мама и папа',        date:'1 июня 1998',            msg:'Двадцать пять лет вместе — и это только начало…' },
+    night:   { names:'Кирилл и Вера',      date:'ночь, 14 августа 2025',  msg:'Твой голос — мой любимый трек' },
+    retro:   { names:'Семья Ковалёвых',    date:'лето 1987',              msg:'Из семейного архива, с любовью' },
+    fest:    { names:'Аня и Максим',       date:'день свадьбы, 07.07.2026', msg:'Песня, с которой у нас всё началось' },
+  };
+  const custom = { names:null, date:null, msg:null };
+  document.querySelectorAll('[contenteditable]').forEach(el => {
+    el.addEventListener('input', () => { custom[el.dataset.field] = el.textContent; });
+  });
+  function applyTexts(theme){
+    document.querySelectorAll('[contenteditable]').forEach(el => {
+      const f = el.dataset.field;
+      el.textContent = custom[f] !== null ? custom[f] : DEFAULTS[theme][f];
+    });
+  }
+
+  /* ---------- лента: прогресс + вобблинг ---------- */
+  const R_MIN = 12, R_MAX = 28, CY = 97, LX = 125, RX = 195;
+  let curP = 0, playing = false, phase = 0;
+  function tapeD(p, w){
+    p = Math.max(0, Math.min(1, p || 0));
+    const rl = R_MIN + (R_MAX - R_MIN) * (1 - p);
+    const rr = R_MIN + (R_MAX - R_MIN) * p;
+    $('#packL').setAttribute('r', rl.toFixed(2));
+    $('#packR').setAttribute('r', rr.toFixed(2));
+    return `M ${LX} ${(CY + rl - 1).toFixed(2)} C 145 ${(128 + w).toFixed(2)}, 175 ${(128 - w * .7).toFixed(2)}, ${RX} ${(CY + rr - 1).toFixed(2)}`;
+  }
+  const drawTape = w => $('#tapePath').setAttribute('d', tapeD(curP, w || 0));
+  drawTape(0);
+  (function loop(){
+    if (playing){ phase += 0.11; drawTape(Math.sin(phase) * 1.2 + Math.sin(phase * 2.3) * 0.5); }
+    requestAnimationFrame(loop);
+  })();
+
+  /* ---------- 2. звук кассеты (Web Audio) ---------- */
+  let actx = null, graph = null;
+  const ensureCtx = () => { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume(); return actx; };
+  const noiseBuffer = ctx => { const b = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate); const d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b; };
+  const satCurve = () => { const n = 1024, c = new Float32Array(n); for (let i = 0; i < n; i++){ const x = i / n * 2 - 1; c[i] = Math.tanh(1.6 * x) / Math.tanh(1.6); } return c; };
+  const filterOn = () => $('#showFilter').checked;
+
+  function stopGraph(){
+    if (!graph) return;
+    [...graph.oscs, graph.hiss].forEach(n => { try { n.stop(); } catch(e){} });
+    graph = null;
+  }
+  function buildGraph(el){
+    const ctx = ensureCtx(); stopGraph();
+    const src  = ctx.createMediaElementSource(el);
+    const dry  = ctx.createGain(); dry.gain.value = 1;
+    const wet  = ctx.createGain(); wet.gain.value = 0;
+    const hp = ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=70;
+    const lp = ctx.createBiquadFilter(); lp.type='lowpass';  lp.frequency.value=9000; lp.Q.value=.6;
+    const pk = ctx.createBiquadFilter(); pk.type='peaking';  pk.frequency.value=2400; pk.gain.value=2.5; pk.Q.value=.9;
+    const sh = ctx.createWaveShaper(); sh.curve = satCurve(); sh.oversample='2x';
+    const dly = ctx.createDelay(0.05); dly.delayTime.value=0.012;
+    const lfoW = ctx.createOscillator(); lfoW.frequency.value=0.8; const gW=ctx.createGain(); gW.gain.value=0.0035; lfoW.connect(gW).connect(dly.delayTime); lfoW.start();
+    const lfoF = ctx.createOscillator(); lfoF.frequency.value=5.3; const gF=ctx.createGain(); gF.gain.value=0.0012; lfoF.connect(gF).connect(dly.delayTime); lfoF.start();
+    src.connect(dry).connect(ctx.destination);
+    src.connect(hp); hp.connect(lp); lp.connect(pk); pk.connect(sh); sh.connect(dly); dly.connect(wet); wet.connect(ctx.destination);
+    const hiss = ctx.createBufferSource(); hiss.buffer = noiseBuffer(ctx); hiss.loop = true;
+    const hf = ctx.createBiquadFilter(); hf.type='highpass'; hf.frequency.value=3000;
+    const hg = ctx.createGain(); hg.gain.value=0;
+    hiss.connect(hf); hf.connect(hg); hg.connect(ctx.destination); hiss.start();
+    graph = { el, dry, wet, hg, oscs:[lfoW, lfoF] };
+    applyFilterState();
+  }
+  function applyFilterState(){
+    if (!graph) return;
+    const on = filterOn(), t = actx.currentTime;
+    graph.wet.gain.setTargetAtTime(on ? 1 : 0, t, .05);
+    graph.dry.gain.setTargetAtTime(on ? 0 : 1, t, .05);
+    graph.hg.gain.setTargetAtTime(on && playing ? 0.014 : 0, t, .08);
+  }
+  $('#showFilter').onchange = () => {
+    if (filterOn() && ws && !graph) buildGraph(ws.getMediaElement());
+    ensureCtx(); applyFilterState();
+  };
+
+  /* ---------- 3. перемотка с визгом ленты ---------- */
+  let whine = null, stepInt = null, wasPlaying = false;
+  function startWhine(dir){
+    const ctx = ensureCtx(); stopWhine();
+    const src = ctx.createBufferSource(); src.buffer = noiseBuffer(ctx); src.loop = true;
+    const bp  = ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value = dir > 0 ? 1100 : 850; bp.Q.value=1.4;
+    const bp2 = ctx.createBiquadFilter(); bp2.type='bandpass'; bp2.frequency.value = dir > 0 ? 2600 : 2100; bp2.Q.value=2;
+    const g = ctx.createGain(); g.gain.value=0;
+    const lfo = ctx.createOscillator(); lfo.frequency.value = dir > 0 ? 13 : 9;
+    const lg = ctx.createGain(); lg.gain.value=140; lfo.connect(lg).connect(bp.frequency); lfo.start();
+    src.connect(bp).connect(g); src.connect(bp2).connect(g); g.connect(ctx.destination);
+    g.gain.setTargetAtTime(0.05, ctx.currentTime, .03);
+    src.start(); whine = { src, g, lfo };
+  }
+  function stopWhine(){
+    if (!whine) return;
+    const { src, g, lfo } = whine;
+    g.gain.setTargetAtTime(0, actx.currentTime, .04);
+    setTimeout(() => { try { src.stop(); lfo.stop(); } catch(e){} }, 250);
+    whine = null;
+  }
+  function holdSeek(dir){
+    if (!ws) return;
+    const el = ws.getMediaElement();
+    wasPlaying = !el.paused;
+    startWhine(dir);
+    body.classList.add('fast');
+    if (dir > 0){ el.playbackRate = 4; el.play(); }
+    else { if (!el.paused) el.pause(); stepInt = setInterval(() => { el.currentTime = Math.max(0, el.currentTime - 1.2); }, 90); }
+  }
+  function endSeek(dir){
+    if (!ws) return;
+    const el = ws.getMediaElement();
+    stopWhine(); body.classList.remove('fast');
+    if (dir > 0){ el.playbackRate = 1; if (!wasPlaying) el.pause(); }
+    else { clearInterval(stepInt); stepInt = null; if (wasPlaying) el.play(); }
+  }
+  [['#rew', -1], ['#ff', 1]].forEach(([sel, dir]) => {
+    const b = $(sel);
+    b.addEventListener('pointerdown', e => { e.preventDefault(); holdSeek(dir); });
+    ['pointerup','pointerleave','pointercancel'].forEach(ev => b.addEventListener(ev, () => endSeek(dir)));
+    b.addEventListener('contextmenu', e => e.preventDefault());
+  });
+
+  /* ---------- wavesurfer ---------- */
+  function makeWs(url){
+    if (ws) ws.destroy();
+    stopGraph();
+    dur = 0; curP = 0; drawTape(0);
+    const t = themeVars();
+    ws = WaveSurfer.create({
+      container:'#wave', url, height:76,
+      barWidth:2, barGap:2, barRadius:2, cursorWidth:1, normalize:true,
+      waveColor:t.wave, progressColor:t.accent,
+    });
+    if (filterOn()) buildGraph(ws.getMediaElement());
+    ws.on('play',  () => { playing = true;  body.classList.add('playing'); applyFilterState(); });
+    ws.on('pause', () => { playing = false; body.classList.remove('playing'); drawTape(0); applyFilterState(); });
+    ws.on('finish',() => { playing = false; body.classList.remove('playing'); drawTape(0); applyFilterState(); });
+    ws.on('decode', d => { dur = d; $('#tot').textContent = fmt(d); });
+    const onTime = t => { $('#cur').textContent = fmt(t); if (dur > 0){ curP = t / dur; if (!playing) drawTape(0); } };
+    ws.on('timeupdate', onTime);
+    ws.on('seeking',    onTime);
+  }
+
+  const toggle = () => ws ? ws.playPause() : $('#file').click();
+  $('#play').onclick = toggle;
+  $('#cassette').onclick = toggle;
+  $('#file').onchange = e => { const f = e.target.files[0]; if (f) makeWs(URL.createObjectURL(f)); };
+
+  /* темы */
+  document.querySelectorAll('[data-theme]').forEach(b => b.onclick = () => {
+    body.dataset.theme = b.dataset.theme;
+    document.querySelectorAll('[data-theme]').forEach(x => x.classList.toggle('active', x === b));
+    applyTexts(b.dataset.theme);
+    if (ws) { const t = themeVars(); ws.setOptions({ waveColor:t.wave, progressColor:t.accent }); }
+  });
+
+  /* кассета / кнопка play */
+  function applyPlayVis(){ body.classList.toggle('show-play', $('#showPlay').checked); }
+  function setCassette(on){
+    $('#cassette').style.display = on ? '' : 'none';
+    body.classList.toggle('has-cassette', on);
+    if (!on && !$('#showPlay').checked) $('#showPlay').checked = true; // защита: без кассеты нужна кнопка
+    applyPlayVis();
+  }
+  $('#showCassette').onchange = e => setCassette(e.target.checked);
+  $('#showPlay').onchange = applyPlayVis;
+  setCassette(true);
+
+  /* предпросмотр */
+  function setPreview(on){
+    body.classList.toggle('preview', on);
+    document.querySelectorAll('[contenteditable]').forEach(el => el.contentEditable = on ? 'false' : 'true');
+  }
+  $('#previewBtn').onclick  = () => setPreview(true);
+  $('#exitPreview').onclick = () => setPreview(false);
+</script>
+</body>
+</html>
