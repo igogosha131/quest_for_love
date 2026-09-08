@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
@@ -155,7 +155,7 @@
   /* ---------- окно заказа ---------- */
   .order-overlay{position:fixed;inset:0;z-index:100;background:rgba(10,10,10,.45);backdrop-filter:blur(10px);
     display:none;align-items:center;justify-content:center;padding:20px}
-  .order-overlay.open{display:flex;animation:overlayIn .25s ease}
+  .order-overlay.open{display:flex;opacity:1;animation:overlayIn .25s ease forwards}
   @keyframes overlayIn{from{opacity:0}to{opacity:1}}
 
   .order-card{position:relative;background:var(--panel);border:1px solid var(--panelb);color:var(--ink);
@@ -223,6 +223,30 @@
 
 <button id="orderFab" class="order-fab">🛒 Оформить заказ</button>
 <button id="exitPreview" class="exitbtn">← к настройкам</button>
+
+<div id="orderModal" class="order-overlay">
+  <form id="orderForm" class="order-card">
+    <button type="button" id="closeOrderX" class="order-close" aria-label="закрыть">×</button>
+    <div class="order-head">
+      <span class="order-icon">🎁</span>
+      <div>
+        <h3>Оформить заказ</h3>
+        <p>Оставьте контакты — мы свяжемся и уточним детали печати</p>
+      </div>
+    </div>
+    <div class="order-fields">
+      <label class="ofield">имя<input name="name" placeholder="Как к вам обращаться" required></label>
+      <label class="ofield">телефон<input name="phone" placeholder="+7 ..." required></label>
+      <label class="ofield">email<input name="email" placeholder="необязательно"></label>
+      <label class="ofield">комментарий<textarea name="comment" rows="3" placeholder="Пожелания к кассете"></textarea></label>
+    </div>
+    <div class="order-actions">
+      <button type="button" id="cancelOrder" class="obtn ghost">Отмена</button>
+      <button type="submit" class="obtn solid">Отправить</button>
+    </div>
+    <p id="orderStatus" class="order-status"></p>
+  </form>
+</div>
 
 <main class="page">
   <svg class="topicon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -305,30 +329,6 @@
 
   <p class="msg" data-field="msg" contenteditable spellcheck="false">С годовщиной! Это песня нашего первого танца ♥</p>
   <footer>создать свою историю →</footer>
-
-  <div id="orderModal" class="order-overlay">
-    <form id="orderForm" class="order-card">
-      <button type="button" id="closeOrderX" class="order-close" aria-label="закрыть">×</button>
-      <div class="order-head">
-        <span class="order-icon">🎁</span>
-        <div>
-          <h3>Оформить заказ</h3>
-          <p>Оставьте контакты — мы свяжемся и уточним детали печати</p>
-        </div>
-      </div>
-      <div class="order-fields">
-        <label class="ofield">имя<input name="name" placeholder="Как к вам обращаться" required></label>
-        <label class="ofield">телефон<input name="phone" placeholder="+7 ..." required></label>
-        <label class="ofield">email<input name="email" placeholder="необязательно"></label>
-        <label class="ofield">комментарий<textarea name="comment" rows="3" placeholder="Пожелания к кассете"></textarea></label>
-      </div>
-      <div class="order-actions">
-        <button type="button" id="cancelOrder" class="obtn ghost">Отмена</button>
-        <button type="submit" class="obtn solid">Отправить</button>
-      </div>
-      <p id="orderStatus" class="order-status"></p>
-    </form>
-  </div>
 </main>
 
 <script>
