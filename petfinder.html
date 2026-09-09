@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Тео — Smart Pet Profile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,340;9..144,440;9..144,560&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --milk:#F6F3EC;
+    --paper:#FFFFFF;
+    --graphite:#26241F;
+    --deep:#17150F;
+    --warm-gray:#8B8272;
+    --warm-gray-soft:#B3AB99;
+    --line:#E6E0D2;
+    --line-soft:#EFEAE0;
+    --gold:#A47B2E;
+    --gold-soft:#C9A55E;
+    --gold-wash:#F1E7D2;
+    --radius-card: 26px;
+    --radius-el: 14px;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+
+  html,body{
+    background:var(--milk);
+    color:var(--graphite);
+    font-family:'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100%;
+  }
+
+  body{
+    display:flex;
+    justify-content:center;
+    padding:48px 16px 64px;
+    background:
+      radial-gradient(ellipse 900px 500px at 50% -10%, #fffdf8 0%, var(--milk) 55%),
+      var(--milk);
+  }
+
+  .noise{
+    position:fixed; inset:0; pointer-events:none;
+    opacity:.035; mix-blend-mode:multiply; z-index:0;
+  }
+
+  .frame{
+    position:relative;
+    width:100%;
+    max-width:420px;
+    z-index:1;
+  }
+
+  /* ---------- tag ring detail ---------- */
+  .ring-wrap{
+    display:flex;
+    justify-content:center;
+    margin-bottom:-19px;
+    position:relative;
+    z-index:3;
+  }
+  .ring{
+    width:38px; height:38px;
+    border-radius:50%;
+    border:3px solid var(--gold-soft);
+    background:var(--milk);
+    box-shadow:0 1px 0 rgba(255,255,255,.6) inset, 0 2px 6px rgba(23,21,15,.08);
+  }
+
+  .card{
+    background:var(--paper);
+    border-radius:var(--radius-card);
+    border:1px solid var(--line-soft);
+    box-shadow:0 1px 2px rgba(23,21,15,.03), 0 18px 40px -22px rgba(23,21,15,.18);
+    overflow:hidden;
+    position:relative;
+  }
+
+  /* ---------- HERO ---------- */
+  .hero-photo{
+    position:relative;
+    aspect-ratio:1/1;
+    background:
+      radial-gradient(120% 90% at 30% 15%, #33302a 0%, transparent 55%),
+      linear-gradient(150deg, var(--deep) 0%, #2c2820 55%, var(--graphite) 100%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .hero-photo svg{ width:46%; opacity:.9; }
+
+  .status-pill{
+    position:absolute;
+    top:18px; left:18px;
+    display:flex; align-items:center; gap:7px;
+    background:rgba(23,21,15,.35);
+    backdrop-filter:blur(6px);
+    border:1px solid rgba(255,255,255,.14);
+    padding:6px 12px 6px 10px;
+    border-radius:100px;
+    font-size:12px;
+    color:#F3EFE4;
+    letter-spacing:.02em;
+  }
+  .status-dot{
+    width:7px; height:7px; border-radius:50%;
+    background:#8FBF7A;
+    box-shadow:0 0 0 3px rgba(143,191,122,.28);
+  }
+
+  .species-pill{
+    position:absolute;
+    top:18px; right:18px;
+    background:rgba(23,21,15,.35);
+    backdrop-filter:blur(6px);
+    border:1px solid rgba(255,255,255,.14);
+    padding:6px 12px;
+    border-radius:100px;
+    font-size:12px;
+    color:#F3EFE4;
+  }
+
+  .hero-body{
+    padding:22px 24px 20px;
+    border-bottom:1px solid var(--line-soft);
+  }
+
+  .name-row{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .pet-name{
+    font-family:'Fraunces', serif;
+    font-optical-sizing:auto;
+    font-weight:560;
+    font-size:38px;
+    line-height:1;
+    letter-spacing:-.01em;
+    color:var(--deep);
+  }
+
+  .meta-line{
+    margin-top:8px;
+    font-size:14.5px;
+    color:var(--warm-gray);
+  }
+  .meta-line span:not(:last-child)::after{
+    content:'';
+    display:inline-block;
+    width:3px; height:3px;
+    border-radius:50%;
+    background:var(--warm-gray-soft);
+    margin:0 8px;
+    vertical-align:middle;
+  }
+
+  .lost-note{
+    margin-top:16px;
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    padding:13px 14px;
+    background:var(--gold-wash);
+    border-radius:var(--radius-el);
+  }
+  .lost-note svg{ flex:none; margin-top:2px; }
+  .lost-note p{
+    font-size:14px;
+    line-height:1.5;
+    color:#5B4A22;
+  }
+
+  /* ---------- CONTACT CTAs ---------- */
+  .cta-block{
+    padding:18px 24px 22px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:9px;
+    height:54px;
+    border-radius:var(--radius-el);
+    font-family:'Manrope', sans-serif;
+    font-size:15.5px;
+    font-weight:600;
+    text-decoration:none;
+    border:1px solid transparent;
+    transition:transform .15s ease, opacity .15s ease;
+  }
+  .btn:active{ transform:scale(.98); }
+  .btn-primary{
+    background:var(--deep);
+    color:var(--milk);
+  }
+  .btn-secondary{
+    background:transparent;
+    border-color:var(--line);
+    color:var(--graphite);
+  }
+  .btn svg{ flex:none; }
+
+  /* ---------- SECTIONS ---------- */
+  .section{
+    padding:22px 24px;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .section:last-of-type{ border-bottom:none; }
+
+  .section-title{
+    font-size:13px;
+    font-weight:600;
+    color:var(--warm-gray);
+    letter-spacing:.01em;
+    margin-bottom:14px;
+  }
+
+  .info-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    row-gap:14px;
+    column-gap:12px;
+  }
+  .info-grid .full{ grid-column:1 / -1; }
+  .info-item .label{
+    font-size:12px;
+    color:var(--warm-gray-soft);
+    margin-bottom:3px;
+  }
+  .info-item .value{
+    font-size:14.5px;
+    color:var(--graphite);
+    font-weight:500;
+    line-height:1.4;
+  }
+
+  .contact-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:10px 0;
+  }
+  .contact-row + .contact-row{ border-top:1px solid var(--line-soft); }
+  .contact-row .label{ font-size:13px; color:var(--warm-gray); }
+  .contact-row a{
+    font-size:15px;
+    font-weight:600;
+    color:var(--graphite);
+    text-decoration:none;
+  }
+  .contact-row a:hover{ color:var(--gold); }
+  .pref-tag{
+    display:inline-block;
+    margin-top:10px;
+    font-size:12px;
+    color:var(--gold);
+    background:var(--gold-wash);
+    padding:5px 10px;
+    border-radius:100px;
+  }
+
+  .chip-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:14px;
+  }
+  .chip{
+    font-size:12.5px;
+    padding:6px 12px;
+    border-radius:100px;
+    border:1px solid var(--line);
+    color:var(--graphite);
+  }
+  .instruction{
+    font-size:14px;
+    line-height:1.6;
+    color:var(--graphite);
+  }
+
+  .med-list{ display:flex; flex-direction:column; gap:10px; }
+  .med-item{ display:flex; gap:10px; align-items:flex-start; }
+  .med-dot{
+    width:5px; height:5px; border-radius:50%;
+    background:var(--gold-soft);
+    margin-top:8px; flex:none;
+  }
+  .med-item .value{ font-size:14px; line-height:1.5; color:var(--graphite); }
+  .med-item .value b{ font-weight:600; color:var(--deep); }
+
+  .vet-block{
+    background:var(--milk);
+    border-radius:var(--radius-el);
+    padding:16px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .vet-block .vname{ font-size:14px; font-weight:600; color:var(--graphite); }
+  .vet-block .vphone{ font-size:12.5px; color:var(--warm-gray); margin-top:2px; }
+  .vet-block a{
+    font-size:13px; font-weight:600; color:var(--gold);
+    text-decoration:none;
+    white-space:nowrap;
+  }
+
+  .trust{
+    text-align:center;
+    padding:20px 30px;
+    font-size:12.5px;
+    line-height:1.6;
+    color:var(--warm-gray-soft);
+  }
+
+  .footer{
+    padding:18px 24px 24px;
+    text-align:center;
+  }
+  .wordmark{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:12px;
+    letter-spacing:.02em;
+    color:var(--warm-gray-soft);
+  }
+  .wordmark svg{ opacity:.6; }
+  .edit-link{
+    display:block;
+    margin-top:10px;
+    font-size:11.5px;
+    color:var(--warm-gray-soft);
+    text-decoration:underline;
+    text-decoration-color:var(--line);
+    text-underline-offset:3px;
+    background:none;
+    border:none;
+    cursor:pointer;
+    font-family:inherit;
+  }
+
+  .toast{
+    position:fixed;
+    left:50%; bottom:28px;
+    transform:translate(-50%, 20px);
+    background:var(--deep);
+    color:var(--milk);
+    font-size:13px;
+    padding:12px 18px;
+    border-radius:100px;
+    opacity:0;
+    transition:opacity .25s ease, transform .25s ease;
+    pointer-events:none;
+    z-index:20;
+    white-space:nowrap;
+  }
+  .toast.show{ opacity:1; transform:translate(-50%, 0); }
+
+  @media (min-width:640px){
+    body{ padding-top:72px; }
+    .frame{ max-width:400px; }
+    .card{ box-shadow:0 1px 2px rgba(23,21,15,.04), 0 30px 60px -24px rgba(23,21,15,.22); }
+  }
+</style>
+</head>
+<body>
+
+<svg class="noise" width="100%" height="100%">
+  <filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/></filter>
+  <rect width="100%" height="100%" filter="url(#n)"/>
+</svg>
+
+<div class="frame">
+
+  <div class="ring-wrap"><div class="ring"></div></div>
+
+  <div class="card">
+
+    <!-- HERO -->
+    <div class="hero-photo">
+      <div class="status-pill">
+        <span class="status-dot"></span>
+        Профиль активен
+      </div>
+      <div class="species-pill">Собака</div>
+      <svg viewBox="0 0 200 200" fill="none">
+        <path d="M100 30c-5 0-10 6-10 14 0 5 2 9 5 12-14 3-25 15-27 30-1 8 2 14 8 14 4 0 6-3 9-3 2 6 8 11 15 11s13-5 15-11c3 0 5 3 9 3 6 0 9-6 8-14-2-15-13-27-27-30 3-3 5-7 5-12 0-8-5-14-10-14Z"
+          stroke="#C9A55E" stroke-width="1.4" opacity="0.85"/>
+        <circle cx="70" cy="52" r="4" fill="#C9A55E" opacity="0.6"/>
+        <circle cx="130" cy="52" r="4" fill="#C9A55E" opacity="0.6"/>
+      </svg>
+    </div>
+
+    <div class="hero-body">
+      <div class="name-row">
+        <div class="pet-name">Тео</div>
+      </div>
+      <div class="meta-line">
+        <span>Бордер-колли микс</span><span>Кобель</span><span>3 года</span>
+      </div>
+
+      <div class="lost-note">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v14M1 8h14" stroke="#A47B2E" stroke-width="0" /><circle cx="8" cy="8" r="6.4" stroke="#A47B2E" stroke-width="1.2"/><path d="M8 5.2v3.4M8 10.6v.05" stroke="#A47B2E" stroke-width="1.3" stroke-linecap="round"/></svg>
+        <p>Тео потерялся. Пожалуйста, свяжитесь с владелицей — она рядом и очень его ждёт.</p>
+      </div>
+    </div>
+
+    <!-- QUICK CONTACT -->
+    <div class="cta-block">
+      <a class="btn btn-primary" href="tel:+79161234567">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.5.6.6 0 1 .5 1 1V20c0 .6-.5 1-1 1C10.6 21 3 13.4 3 4c0-.6.5-1 1-1h3.4c.6 0 1 .5 1 1 0 1.2.2 2.4.6 3.5.1.4 0 .8-.2 1L6.6 10.8Z" stroke="#F6F3EC" stroke-width="1.4" stroke-linejoin="round"/></svg>
+        Позвонить владелице
+      </a>
+      <a class="btn btn-secondary" href="https://wa.me/79161234567" target="_blank" rel="noopener">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3Z" stroke="#26241F" stroke-width="1.3"/><path d="M8.5 8.7c.2-.5.5-.5.8-.5h.6c.2 0 .5 0 .7.5.3.6.9 2 1 2.1.1.2.1.4 0 .6-.1.2-.2.3-.4.5-.2.2-.4.4-.2.7.2.4 1 1.5 2.1 2.4 1.4 1.2 2 1.3 2.3 1.2.2-.1.4-.4.6-.6.2-.2.4-.3.6-.2.2.1 1.6.8 1.9 1 .3.1.5.2.5.4 0 .2 0 1.1-.4 1.5-.4.5-1.6.9-2.2.9-.9 0-2.1-.3-4.2-1.9-2.6-2-4.3-4.5-4.5-4.9-.2-.4-1.3-1.8-1.3-3.4 0-1.6.8-2.4 1.1-2.7Z" fill="#26241F"/></svg>
+        Написать в WhatsApp
+      </a>
+    </div>
+
+    <!-- ОСНОВНОЕ -->
+    <div class="section">
+      <div class="section-title">Основное</div>
+      <div class="info-grid">
+        <div class="info-item"><div class="label">Порода</div><div class="value">Бордер-колли микс</div></div>
+        <div class="info-item"><div class="label">Пол</div><div class="value">Кобель, кастрирован</div></div>
+        <div class="info-item"><div class="label">Возраст</div><div class="value">3 года</div></div>
+        <div class="info-item"><div class="label">Город / район</div><div class="value">Москва, Хамовники</div></div>
+        <div class="info-item full"><div class="label">Приметы</div><div class="value">Чёрно-белый окрас, одно ухо стоит, синий ошейник с кожаной биркой</div></div>
+      </div>
+    </div>
+
+    <!-- КОНТАКТЫ ВЛАДЕЛЬЦА -->
+    <div class="section">
+      <div class="section-title">Контакты владельца</div>
+      <div class="contact-row"><span class="label">Анна, владелица</span></div>
+      <div class="contact-row">
+        <span class="label">Основной телефон</span>
+        <a href="tel:+79161234567">+7 916 123-45-67</a>
+      </div>
+      <div class="contact-row">
+        <span class="label">Запасной телефон</span>
+        <a href="tel:+74950001234">+7 495 000-12-34</a>
+      </div>
+      <span class="pref-tag">Предпочтительно: звонок</span>
+    </div>
+
+    <!-- КАК ОБРАЩАТЬСЯ -->
+    <div class="section">
+      <div class="section-title">Как обращаться с Тео</div>
+      <div class="chip-row">
+        <span class="chip">Дружелюбный</span>
+        <span class="chip">Можно брать на руки</span>
+        <span class="chip">Пугается толпы</span>
+        <span class="chip">Может убежать</span>
+      </div>
+      <p class="instruction">Тео спокойно идёт на руки к людям. Держите крепко — увидев запах или другую собаку, может рвануть. Громких звуков и толпы старается избегать.</p>
+    </div>
+
+    <!-- МЕДИЦИНА -->
+    <div class="section">
+      <div class="section-title">Медицинская информация</div>
+      <div class="med-list">
+        <div class="med-item"><span class="med-dot"></span><span class="value"><b>Аллергия —</b> куриный белок</span></div>
+        <div class="med-item"><span class="med-dot"></span><span class="value"><b>Препарат —</b> поддерживающее сердечное, дважды в день</span></div>
+        <div class="med-item"><span class="med-dot"></span><span class="value"><b>Важно —</b> исключить шоколад и орехи</span></div>
+      </div>
+    </div>
+
+    <!-- ВЕТКЛИНИКА -->
+    <div class="section">
+      <div class="section-title">Ветеринарная клиника</div>
+      <div class="vet-block">
+        <div>
+          <div class="vname">Ветклиника «Белый Клык»</div>
+          <div class="vphone">+7 495 222-33-44</div>
+        </div>
+        <a href="tel:+74952223344">Позвонить</a>
+      </div>
+    </div>
+
+    <!-- ДОВЕРИЕ -->
+    <div class="trust">
+      Данные обновляются владелицей Тео и всегда актуальны на момент сканирования.
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+      <span class="wordmark">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M12 15c-4 0-7 2.2-7 5.5V21h14v-.5c0-3.3-3-5.5-7-5.5Z" stroke="#B3AB99" stroke-width="1.3"/><circle cx="7" cy="9" r="2" fill="#B3AB99"/><circle cx="17" cy="9" r="2" fill="#B3AB99"/><circle cx="9.5" cy="5" r="1.8" fill="#B3AB99"/><circle cx="14.5" cy="5" r="1.8" fill="#B3AB99"/></svg>
+        Smart Pet Profile
+      </span>
+      <button class="edit-link" onclick="showToast()">Обновить данные (для владельца)</button>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast">Доступно после входа владельца</div>
+
+<script>
+  function showToast(){
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    clearTimeout(window._tt);
+    window._tt = setTimeout(()=> t.classList.remove('show'), 2200);
+  }
+</script>
+
+</body>
+  </html>
